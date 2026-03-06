@@ -45,18 +45,16 @@ public class ConsensusLayerBenchmark {
      * Record holding benchmark execution parameters.
      *
      * @param numberOfNodes the number of nodes in the network
-     * @param warmupCount the number of warmup transactions
-     * @param transactionCount the number of benchmark transactions
-     * @param maxTps the maximum transactions per second rate
+     * @param tps transactions per second rate
      * @param stabilizationTime time to wait for network stabilization (seconds)
      * @param warmupTime time to wait after warmup transactions (seconds)
      * @param collectionTime time to wait for transaction collection (seconds)
      */
     public record BenchmarkParameters(
             int numberOfNodes,
-            int warmupCount,
-            int transactionCount,
-            int maxTps,
+            @NonNull Duration warmupLength,
+            int tps,
+            @NonNull Duration testLength,
             long stabilizationTime,
             long warmupTime,
             long collectionTime) {
@@ -65,7 +63,14 @@ public class ConsensusLayerBenchmark {
          * Creates default benchmark parameters.
          */
         public static BenchmarkParameters defaults() {
-            return new BenchmarkParameters(4, 1000, 1000, 20, 3L, 5L, 10L);
+            return new BenchmarkParameters(
+                    4,
+                    Duration.ofSeconds(15),
+                    20,
+                    Duration.ofMinutes(1),
+                    3L,
+                    5L,
+                    10L);
         }
     }
 
@@ -123,28 +128,28 @@ public class ConsensusLayerBenchmark {
 
         // Warm-up phase: submit empty transactions to warm up all nodes
         log.info(
-                "[{}] Starting warm-up phase: submitting {} empty transactions across all nodes...",
+                "[{}] Starting warm-up phase: submitting empty transactions across all nodes for {}",
                 configName,
-                params.warmupCount());
-        final List<Node> nodes = network.nodes();
-        for (int i = 0; i < params.warmupCount(); i++) {
-            final Node targetNode = nodes.get(i % nodes.size());
-            targetNode.submitTransaction(TransactionFactory.createEmptyTransaction(nonceGenerator.incrementAndGet()));
-        }
+                params.warmupLength);
+        new LoadThrottler(env).submitWithRate(
+                params.warmupLength(),
+                params.tps() / params.numberOfNodes,
+                n->n.submitTransaction(TransactionFactory.createEmptyTransaction(nonceGenerator.incrementAndGet())));
 
         // Wait for warm-up to complete
         timeManager.waitFor(Duration.ofSeconds(params.warmupTime()));
         log.info("[{}] Warm-up phase complete", configName);
 
         log.info(
-                "[{}] Starting benchmark: It will take approximately {}s submitting {} transactions at a rate of {} ops/s...",
+                "[{}] Starting benchmark: It will take {} submitting transactions at a rate of {} ops/s...",
                 configName,
-                params.transactionCount() / params.maxTps(),
-                params.transactionCount(),
-                params.maxTps());
+                params.testLength(),
+                params.tps());
 
-        final LoadThrottler throttler = new LoadThrottler(env);
-        throttler.submitWithRate(params.transactionCount(), params.maxTps());
+        final int transCount = new LoadThrottler(env).submitWithRate(
+                params.testLength(),
+                params.tps() / params.numberOfNodes,
+                Node::generateTransaction);
         // Wait for all transactions to be processed
         timeManager.waitFor(Duration.ofSeconds(params.collectionTime()));
         log.info("[{}] Benchmark transactions submitted, collecting results...", configName);
@@ -157,7 +162,7 @@ public class ConsensusLayerBenchmark {
         parseFromLogs(network.newLogResults(), BenchmarkServiceLogParser::parseMeasurement, collector::addEntry);
         // Make sure the benchmark run is valid
         assertEquals(
-                params.transactionCount(),
+                transCount,
                 collector.computeStatistics().totalMeasurements(),
                 "The benchmark is invalid as some of the transactions sent were not measured");
         final String report = collector.generateReport();

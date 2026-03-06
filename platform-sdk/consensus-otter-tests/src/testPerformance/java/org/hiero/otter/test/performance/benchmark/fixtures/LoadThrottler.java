@@ -3,9 +3,12 @@ package org.hiero.otter.test.performance.benchmark.fixtures;
 
 import com.swirlds.common.utility.InstantUtils;
 import edu.umd.cs.findbugs.annotations.NonNull;
+import java.time.Duration;
 import java.util.List;
 import java.util.Objects;
+import java.time.Instant;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 import org.hiero.otter.fixtures.Network;
 import org.hiero.otter.fixtures.Node;
 import org.hiero.otter.fixtures.TestEnvironment;
@@ -43,15 +46,14 @@ public class LoadThrottler {
      *   <li>Rate limits to achieve target rate</li>
      * </ol>
      *
-     * @param count the number of transactions to submit
+     * @param length the length of time to submit transactions for
      * @param maxTransactionsPerSecond the maximum rate in seconds to send transactions to the network
      * @throws IllegalArgumentException if count or maxTransactionsPerSecond are less than zero or
      *  there are non-active nodes
      */
-    public void submitWithRate(final int count, final int maxTransactionsPerSecond) {
-
-        if (count <= 0) {
-            throw new IllegalArgumentException("count must be positive, got: " + count);
+    public int submitWithRate(final Duration length, final int maxTransactionsPerSecond, final Consumer<Node> submitter) {
+        if (!length.isPositive()) {
+            throw new IllegalArgumentException("length must be positive, got: " + length);
         }
         if (maxTransactionsPerSecond <= 0) {
             throw new IllegalArgumentException(
@@ -66,24 +68,28 @@ public class LoadThrottler {
         if (candidates.isEmpty()) {
             throw new IllegalArgumentException("No active nodes available in the network");
         }
-        for (int i = 0; i < count; i++) {
+        final Instant endTime = Instant.now().plus(length);
+        int numSubmitted = 0;
+        while (endTime.isAfter(Instant.now())) {
             // Select node with even distribution
-            final Node targetNode = candidates.get(i % candidates.size());
+            final Node targetNode = candidates.get(numSubmitted % candidates.size());
 
-            // Generate transaction and track count
-            targetNode.generateTransaction();
+            // Submit transaction and track count
+            submitter.accept(targetNode);
 
             // Rate limit to achieve target rate (compensating for work time)
-            final long expectedNanos = (i + 1) * intervalNanos;
+            final long expectedNanos = (numSubmitted + 1) * intervalNanos;
             final long elapsedNanos = System.nanoTime() - startNanos;
             final long waitTime = expectedNanos - elapsedNanos;
             if (waitTime > 0) {
                 try {
                     TimeUnit.NANOSECONDS.sleep(waitTime);
-                } catch (InterruptedException e) {
+                } catch (final InterruptedException e) {
                     throw new AssertionError(e);
                 }
             }
+            numSubmitted++;
         }
+        return numSubmitted;
     }
 }
