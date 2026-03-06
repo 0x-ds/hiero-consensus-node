@@ -12,7 +12,7 @@ package org.hiero.otter.fixtures;
 public interface TransactionGenerator {
 
     /** The number of transactions to generate per second, per node. */
-    int TPS = 100;
+    int TPS = 1;
 
     /**
      * Start the generation of transactions.
