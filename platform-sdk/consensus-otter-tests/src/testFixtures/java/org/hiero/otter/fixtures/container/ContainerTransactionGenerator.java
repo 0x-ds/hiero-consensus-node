@@ -72,12 +72,12 @@ public class ContainerTransactionGenerator implements TransactionGenerator {
      */
     @Override
     public synchronized void start() {
-        if (generationTask != null && !generationTask.isCancelled()) {
-            return;
-        }
-
-        generationTask = scheduler.scheduleAtFixedRate(
-                this::generateAndSubmit, 0, CYCLE_DURATION.toMillis(), TimeUnit.MILLISECONDS);
+//        if (generationTask != null && !generationTask.isCancelled()) {
+//            return;
+//        }
+//
+//        generationTask = scheduler.scheduleAtFixedRate(
+//                this::generateAndSubmit, 0, CYCLE_DURATION.toMillis(), TimeUnit.MILLISECONDS);
     }
 
     /**
@@ -85,10 +85,10 @@ public class ContainerTransactionGenerator implements TransactionGenerator {
      */
     @Override
     public synchronized void stop() {
-        if (generationTask != null) {
-            generationTask.cancel(true);
-            generationTask = null;
-        }
+//        if (generationTask != null) {
+//            generationTask.cancel(true);
+//            generationTask = null;
+//        }
     }
 
     /**
