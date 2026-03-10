@@ -133,7 +133,7 @@ public class ConsensusLayerBenchmark {
                 params.warmupLength);
         new LoadThrottler(env).submitWithRate(
                 params.warmupLength(),
-                params.tps() / params.numberOfNodes,
+                10,
                 n->n.submitTransaction(TransactionFactory.createEmptyTransaction(nonceGenerator.incrementAndGet())));
 
         // Wait for warm-up to complete
@@ -148,7 +148,7 @@ public class ConsensusLayerBenchmark {
 
         final int transCount = new LoadThrottler(env).submitWithRate(
                 params.testLength(),
-                params.tps() / params.numberOfNodes,
+                10,
                 Node::generateTransaction);
         // Wait for all transactions to be processed
         timeManager.waitFor(Duration.ofSeconds(params.collectionTime()));
