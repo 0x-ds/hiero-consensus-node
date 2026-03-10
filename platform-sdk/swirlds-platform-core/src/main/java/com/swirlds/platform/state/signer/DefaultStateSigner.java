@@ -3,9 +3,12 @@ package com.swirlds.platform.state.signer;
 
 import com.hedera.hapi.platform.event.StateSignatureTransaction;
 import com.hedera.pbj.runtime.io.buffer.Bytes;
+import com.swirlds.logging.legacy.LogMarker;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import java.util.Objects;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.hiero.base.crypto.Hash;
 import org.hiero.consensus.crypto.PlatformSigner;
 import org.hiero.consensus.state.signed.ReservedSignedState;
@@ -14,6 +17,7 @@ import org.hiero.consensus.state.signed.ReservedSignedState;
  * A standard implementation of a {@link StateSigner}.
  */
 public class DefaultStateSigner implements StateSigner {
+    private static final Logger logger = LogManager.getLogger(DefaultStateSigner.class);
 
     /**
      * An object responsible for signing states with this node's key.
@@ -49,7 +53,11 @@ public class DefaultStateSigner implements StateSigner {
                     Objects.requireNonNull(reservedSignedState.get().getState().getHash());
             final Bytes signature = signer.sign(stateHash.getBytes());
             Objects.requireNonNull(signature);
-
+            logger.info(
+                    LogMarker.STARTUP.getMarker(),
+                    "Signed state for round {}",
+                    reservedSignedState.get().getRound()
+            );
             return StateSignatureTransaction.newBuilder()
                     .round(reservedSignedState.get().getRound())
                     .signature(signature)

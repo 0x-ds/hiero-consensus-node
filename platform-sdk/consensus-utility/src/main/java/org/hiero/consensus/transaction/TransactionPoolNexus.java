@@ -4,6 +4,7 @@ package org.hiero.consensus.transaction;
 import static org.hiero.base.CompareTo.isLessThan;
 
 import com.hedera.pbj.runtime.io.buffer.Bytes;
+import com.swirlds.logging.legacy.LogMarker;
 import com.swirlds.metrics.api.Metrics;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
@@ -23,6 +24,7 @@ import org.hiero.consensus.model.transaction.TimestampedTransaction;
  * created.
  */
 public class TransactionPoolNexus implements EventTransactionSupplier {
+    private static final org.apache.logging.log4j.Logger logger = org.apache.logging.log4j.LogManager.getLogger(TransactionPoolNexus.class);
     /**
      * The default maximum amount of time the platform may be in an unhealthy state before we start rejecting
      * transactions.
@@ -165,6 +167,9 @@ public class TransactionPoolNexus implements EventTransactionSupplier {
      */
     private synchronized boolean submitTransaction(@NonNull final Bytes transaction, final boolean priority) {
         Objects.requireNonNull(transaction);
+//        logger.info(LogMarker.STARTUP.getMarker(),
+//                "Got transaction from",
+//                new RuntimeException("stack trace"));
 
         // Always submit system transactions. If it's not a system transaction, then only submit it if we
         // don't violate queue size capacity restrictions.
