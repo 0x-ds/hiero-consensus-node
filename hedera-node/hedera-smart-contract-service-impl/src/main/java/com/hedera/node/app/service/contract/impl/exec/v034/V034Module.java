@@ -117,17 +117,25 @@ public interface V034Module {
     @Provides
     @Singleton
     @ServicesV034
+    static EvmSpecVersion provideEvmSpecVersion() {
+        return EvmSpecVersion.PARIS;
+    }
+
+    @Provides
+    @Singleton
+    @ServicesV034
     static HEVM provideEVM(
             @ServicesV034 @NonNull final Set<Operation> customOperations,
             @NonNull final EvmConfiguration evmConfiguration,
             @NonNull final GasCalculator gasCalculator,
-            @CustomOps @NonNull final Set<Operation> customOps) {
+            @CustomOps @NonNull final Set<Operation> customOps,
+            @ServicesV034 @NonNull final EvmSpecVersion evmSpecVersion) {
         // Use Paris EVM with 0.34 custom operations and 0x00 chain id (set at runtime)
         final var operationRegistry = new OperationRegistry();
         registerLondonOperations(operationRegistry, gasCalculator, BigInteger.ZERO);
         customOperations.forEach(operationRegistry::put);
         customOps.forEach(operationRegistry::put);
-        return new HEVM(operationRegistry, gasCalculator, evmConfiguration, EvmSpecVersion.PARIS);
+        return new HEVM(operationRegistry, gasCalculator, evmConfiguration, evmSpecVersion);
     }
 
     @Provides

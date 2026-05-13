@@ -127,11 +127,19 @@ public interface V051Module {
     @Provides
     @Singleton
     @ServicesV051
+    static EvmSpecVersion provideEvmSpecVersion() {
+        return EvmSpecVersion.CANCUN;
+    }
+
+    @Provides
+    @Singleton
+    @ServicesV051
     static HEVM provideEVM(
             @ServicesV051 @NonNull final Set<Operation> customOperations,
             @NonNull final EvmConfiguration evmConfiguration,
             @NonNull final GasCalculator gasCalculator,
-            @CustomOps @NonNull final Set<Operation> customOps) {
+            @CustomOps @NonNull final Set<Operation> customOps,
+            @ServicesV051 @NonNull final EvmSpecVersion evmSpecVersion) {
 
         oneTimeEVMModuleInitialization();
 
@@ -140,7 +148,7 @@ public interface V051Module {
         registerCancunOperations(operationRegistry, gasCalculator, BigInteger.ZERO);
         customOperations.forEach(operationRegistry::put);
         customOps.forEach(operationRegistry::put);
-        return new HEVM(operationRegistry, gasCalculator, evmConfiguration, EvmSpecVersion.CANCUN);
+        return new HEVM(operationRegistry, gasCalculator, evmConfiguration, evmSpecVersion);
     }
 
     @Provides

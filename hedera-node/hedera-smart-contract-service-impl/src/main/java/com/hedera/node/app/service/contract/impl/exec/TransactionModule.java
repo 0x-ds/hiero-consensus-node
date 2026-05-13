@@ -52,6 +52,7 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import java.time.Instant;
 import java.util.Map;
+import org.hyperledger.besu.evm.EvmSpecVersion;
 import org.hyperledger.besu.evm.code.CodeFactory;
 
 @Module(includes = {TransactionConfigModule.class, TransactionInitialStateModule.class})
@@ -238,5 +239,13 @@ public interface TransactionModule {
         // create "hook-aware" EvmFrameState's that e.g. return the executing
         // hook contract's bytecode from address 0x16d
         return evmFrameStates.from(operations, nativeOperations, codeFactory);
+    }
+
+    @Provides
+    @TransactionScope
+    static EvmSpecVersion provideEvmSpecVersion(
+            @NonNull final ContractsConfig contractsConfig,
+            @NonNull final Map<HederaEvmVersion, EvmSpecVersion> evmSpecVersions) {
+        return evmSpecVersions.get(EVM_VERSIONS.get(contractsConfig.evmVersion()));
     }
 }

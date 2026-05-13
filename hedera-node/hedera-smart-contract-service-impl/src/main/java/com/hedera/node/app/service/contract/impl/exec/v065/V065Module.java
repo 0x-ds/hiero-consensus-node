@@ -126,11 +126,19 @@ public interface V065Module {
     @Provides
     @Singleton
     @ServicesV065
+    static EvmSpecVersion provideEvmSpecVersion() {
+        return EvmSpecVersion.CANCUN;
+    }
+
+    @Provides
+    @Singleton
+    @ServicesV065
     static HEVM provideEVM(
             @ServicesV065 @NonNull final Set<Operation> customOperations,
             @NonNull final EvmConfiguration evmConfiguration,
             @NonNull final GasCalculator gasCalculator,
-            @CustomOps @NonNull final Set<Operation> customOps) {
+            @CustomOps @NonNull final Set<Operation> customOps,
+            @ServicesV065 @NonNull final EvmSpecVersion evmSpecVersion) {
 
         oneTimeEVMModuleInitialization();
 
@@ -139,7 +147,7 @@ public interface V065Module {
         customOperations.forEach(operationRegistry::put);
         customOps.forEach(operationRegistry::put);
         // Create a return a custom HederaEVM instance
-        return new HederaEVM(operationRegistry, gasCalculator, evmConfiguration, EvmSpecVersion.CANCUN);
+        return new HederaEVM(operationRegistry, gasCalculator, evmConfiguration, evmSpecVersion);
     }
 
     @Provides

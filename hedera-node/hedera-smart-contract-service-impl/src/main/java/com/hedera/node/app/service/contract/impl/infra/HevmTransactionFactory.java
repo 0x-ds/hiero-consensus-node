@@ -17,6 +17,7 @@ import static com.hedera.hapi.node.base.ResponseCodeEnum.INVALID_FILE_ID;
 import static com.hedera.hapi.node.base.ResponseCodeEnum.INVALID_MAX_AUTO_ASSOCIATIONS;
 import static com.hedera.hapi.node.base.ResponseCodeEnum.INVALID_RENEWAL_PERIOD;
 import static com.hedera.hapi.node.base.ResponseCodeEnum.MAX_GAS_LIMIT_EXCEEDED;
+import static com.hedera.hapi.node.base.ResponseCodeEnum.MAX_INITCODE_SIZE_EXCEEDED;
 import static com.hedera.hapi.node.base.ResponseCodeEnum.NEGATIVE_ALLOWANCE_AMOUNT;
 import static com.hedera.hapi.node.base.ResponseCodeEnum.PROXY_ACCOUNT_ID_FIELD_IS_DEPRECATED;
 import static com.hedera.hapi.node.base.ResponseCodeEnum.REQUESTED_NUM_AUTOMATIC_ASSOCIATIONS_EXCEEDS_ASSOCIATION_LIMIT;
@@ -73,6 +74,8 @@ import com.hedera.pbj.runtime.io.buffer.Bytes;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import edu.umd.cs.findbugs.annotations.Nullable;
 import javax.inject.Inject;
+
+import org.hyperledger.besu.evm.EvmSpecVersion;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
 @TransactionScope
@@ -95,6 +98,7 @@ public class HevmTransactionFactory {
     private final EthTxSigsCache ethereumSignatures;
     private final HederaEvmContext hederaEvmContext;
     private final EntityIdFactory entityIdFactory;
+    private final EvmSpecVersion evmSpecVersion;
 
     @Inject
     public HevmTransactionFactory(
@@ -114,7 +118,8 @@ public class HevmTransactionFactory {
             @NonNull final EthTxSigsCache ethereumSignatures,
             @NonNull final HederaEvmContext hederaEvmContext,
             @NonNull final EntityIdFactory entityIdFactory,
-            @NonNull final HooksConfig hooksConfig) {
+            @NonNull final HooksConfig hooksConfig,
+            @NonNull final EvmSpecVersion evmSpecVersion) {
         this.featureFlags = featureFlags;
         this.hydratedEthTxData = hydratedEthTxData;
         this.gasCalculator = requireNonNull(gasCalculator);
@@ -132,6 +137,7 @@ public class HevmTransactionFactory {
         this.hederaEvmContext = requireNonNull(hederaEvmContext);
         this.entityIdFactory = requireNonNull(entityIdFactory);
         this.hooksConfig = requireNonNull(hooksConfig);
+        this.evmSpecVersion = requireNonNull(evmSpecVersion);
     }
 
     /**
@@ -258,12 +264,14 @@ public class HevmTransactionFactory {
             @NonNull final AccountID senderId,
             @NonNull final EthTxData ethTxData,
             final long maxGasAllowance) {
+        final var initcode = Bytes.wrap(ethTxData.callData());
+        assertInitcodeSize(initcode);
         return new HederaEvmTransaction(
                 senderId,
                 relayerId,
                 null,
                 ethTxData.nonce(),
-                Bytes.wrap(ethTxData.callData()),
+                initcode,
                 Bytes.wrap(ethTxData.chainId()),
                 ethTxData.effectiveTinybarValue(),
                 ethTxData.gasLimit(),
@@ -416,9 +424,10 @@ public class HevmTransactionFactory {
     }
 
     private Bytes initcodeFor(@NonNull final ContractCreateTransactionBody body) {
+        final Bytes resolvedInitcode;
         if (body.hasInitcode()) {
             validateTrue(body.initcode().length() > 0, CONTRACT_BYTECODE_EMPTY);
-            return body.initcode();
+            resolvedInitcode = body.initcode();
         } else {
             final var initcode = fileStore.getFileLeaf(body.fileIDOrElse(FileID.DEFAULT));
             validateFalse(initcode == null, INVALID_FILE_ID);
@@ -426,12 +435,19 @@ public class HevmTransactionFactory {
             validateTrue(initcode.contents().length() > 0, CONTRACT_FILE_EMPTY);
             try {
                 final var hexedInitcode = new String(removeIfAnyLeading0x(initcode.contents()));
-                return Bytes.fromHex(
-                        hexedInitcode + body.constructorParameters().toHex());
+                resolvedInitcode = Bytes.fromHex(hexedInitcode + body.constructorParameters().toHex());
             } catch (IllegalArgumentException | NullPointerException ignore) {
                 throw new HandleException(ERROR_DECODING_BYTESTRING);
             }
         }
+        assertInitcodeSize(resolvedInitcode);
+        return resolvedInitcode;
+    }
+
+    // Caps submitted initcode at the active EVM version's maximum.
+    // Applied uniformly to HAPI ContractCreate (inline + file-resolved) and Ethereum CREATE.
+    private void assertInitcodeSize(@NonNull final Bytes initcode) {
+        validateTrue(initcode.length() <= evmSpecVersion.getMaxInitcodeSize(), MAX_INITCODE_SIZE_EXCEEDED);
     }
 
     private AccountID asAliasedSender(@NonNull final EthTxData txData) {

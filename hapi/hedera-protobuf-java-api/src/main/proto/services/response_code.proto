@@ -1975,4 +1975,11 @@ enum ResponseCodeEnum {
      * The number of associated registered nodes exceeds the maximum allowed limit.
      */
     MAX_REGISTERED_NODES_EXCEEDED = 535;
+
+
+    /**
+     * Returned when a contract-creating transaction supplies initcode larger than the limit.
+     */
+    MAX_INITCODE_SIZE_EXCEEDED = 536;
+
 }

@@ -112,6 +112,13 @@ public interface V067Module {
                 evm, featureFlags, registry, addressChecks, systemContracts, contractMetrics);
     }
 
+    @Provides
+    @Singleton
+    @ServicesV067
+    static EvmSpecVersion provideEvmSpecVersion() {
+        return EvmSpecVersion.CANCUN;
+    }
+
     // spotless:off
     @Provides
     @Singleton
@@ -123,7 +130,8 @@ public interface V067Module {
             @CustomOps @NonNull final Set<Operation> customOps,
             @NonNull final Supplier<ContractsConfig> contractsConfigSupplier,
             @ServicesV067 @NonNull final FeatureFlags featureFlags,
-            @ServicesV067 @NonNull final AddressChecks addressChecks) {
+            @ServicesV067 @NonNull final AddressChecks addressChecks,
+            @ServicesV067 @NonNull final EvmSpecVersion evmSpecVersion) {
 
         KZGPointEvalPrecompiledContract.init();
         // Use Cancun EVM with 0.51 custom operations and 0x00 chain id (set at runtime)
@@ -132,9 +140,9 @@ public interface V067Module {
         customOperations.forEach(operationRegistry::put);
         customOps.forEach(operationRegistry::put);
         if (contractsConfigSupplier.get().useBonnevilleEVM()) {
-            return new BonnevilleEVM(operationRegistry, gasCalculator, evmConfiguration, EvmSpecVersion.CANCUN, featureFlags, addressChecks);
+            return new BonnevilleEVM(operationRegistry, gasCalculator, evmConfiguration, evmSpecVersion, featureFlags, addressChecks);
         } else {
-            return new     HederaEVM(operationRegistry, gasCalculator, evmConfiguration, EvmSpecVersion.CANCUN);
+            return new     HederaEVM(operationRegistry, gasCalculator, evmConfiguration, evmSpecVersion);
         }
     }
     // spotless:on

@@ -19,6 +19,7 @@ import com.hedera.node.app.service.contract.impl.exec.v051.V051Module;
 import com.hedera.node.app.service.contract.impl.exec.v065.V065Module;
 import com.hedera.node.app.service.contract.impl.exec.v066.V066Module;
 import com.hedera.node.app.service.contract.impl.exec.v067.V067Module;
+import org.hyperledger.besu.evm.EvmSpecVersion;
 import com.hedera.node.app.service.contract.impl.handlers.ContractCallHandler;
 import com.hedera.node.app.service.contract.impl.handlers.ContractCallLocalHandler;
 import com.hedera.node.app.service.contract.impl.handlers.ContractCreateHandler;
@@ -189,6 +190,7 @@ public interface ContractServiceModule {
     TransactionProcessor bindV065Processor(@ServicesV065 @NonNull final TransactionProcessor processor);
 
     /**
+     *
      * @param processor the transaction processor
      * @return the bound transaction processor for version 0.66
      */
@@ -207,4 +209,58 @@ public interface ContractServiceModule {
     @Singleton
     @ServicesVersionKey(VERSION_067)
     TransactionProcessor bindV067Processor(@ServicesV067 @NonNull final TransactionProcessor processor);
+
+    @Binds
+    @IntoMap
+    @Singleton
+    @ServicesVersionKey(VERSION_030)
+    EvmSpecVersion bindV030EvmSpecVersion(@ServicesV030 @NonNull final EvmSpecVersion evmSpecVersion);
+
+    @Binds
+    @IntoMap
+    @Singleton
+    @ServicesVersionKey(VERSION_034)
+    EvmSpecVersion bindV034EvmSpecVersion(@ServicesV034 @NonNull final EvmSpecVersion evmSpecVersion);
+
+    @Binds
+    @IntoMap
+    @Singleton
+    @ServicesVersionKey(VERSION_038)
+    EvmSpecVersion bindV038EvmSpecVersion(@ServicesV038 @NonNull final EvmSpecVersion evmSpecVersion);
+
+    @Binds
+    @IntoMap
+    @Singleton
+    @ServicesVersionKey(VERSION_046)
+    EvmSpecVersion bindV046EvmSpecVersion(@ServicesV046 @NonNull final EvmSpecVersion evmSpecVersion);
+
+    @Binds
+    @IntoMap
+    @Singleton
+    @ServicesVersionKey(VERSION_050)
+    EvmSpecVersion bindV050EvmSpecVersion(@ServicesV050 @NonNull final EvmSpecVersion evmSpecVersion);
+
+    @Binds
+    @IntoMap
+    @Singleton
+    @ServicesVersionKey(VERSION_051)
+    EvmSpecVersion bindV051EvmSpecVersion(@ServicesV051 @NonNull final EvmSpecVersion evmSpecVersion);
+
+    @Binds
+    @IntoMap
+    @Singleton
+    @ServicesVersionKey(VERSION_065)
+    EvmSpecVersion bindV065EvmSpecVersion(@ServicesV065 @NonNull final EvmSpecVersion evmSpecVersion);
+
+    @Binds
+    @IntoMap
+    @Singleton
+    @ServicesVersionKey(VERSION_066)
+    EvmSpecVersion bindV066EvmSpecVersion(@ServicesV066 @NonNull final EvmSpecVersion evmSpecVersion);
+
+    @Binds
+    @IntoMap
+    @Singleton
+    @ServicesVersionKey(VERSION_067)
+    EvmSpecVersion bindV067EvmSpecVersion(@ServicesV067 @NonNull final EvmSpecVersion evmSpecVersion);
 }

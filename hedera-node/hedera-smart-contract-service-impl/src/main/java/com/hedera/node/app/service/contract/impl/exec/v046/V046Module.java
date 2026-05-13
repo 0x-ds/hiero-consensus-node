@@ -117,17 +117,25 @@ public interface V046Module {
     @Provides
     @Singleton
     @ServicesV046
+    static EvmSpecVersion provideEvmSpecVersion() {
+        return EvmSpecVersion.SHANGHAI;
+    }
+
+    @Provides
+    @Singleton
+    @ServicesV046
     static HEVM provideEVM(
             @ServicesV046 @NonNull final Set<Operation> customOperations,
             @NonNull final EvmConfiguration evmConfiguration,
             @NonNull final GasCalculator gasCalculator,
-            @CustomOps @NonNull final Set<Operation> customOps) {
+            @CustomOps @NonNull final Set<Operation> customOps,
+            @ServicesV046 @NonNull final EvmSpecVersion evmSpecVersion) {
         // Use Shanghai EVM with 0.46 custom operations and 0x00 chain id (set at runtime)
         final var operationRegistry = new OperationRegistry();
         registerShanghaiOperations(operationRegistry, gasCalculator, BigInteger.ZERO);
         customOperations.forEach(operationRegistry::put);
         customOps.forEach(operationRegistry::put);
-        return new HEVM(operationRegistry, gasCalculator, evmConfiguration, EvmSpecVersion.SHANGHAI);
+        return new HEVM(operationRegistry, gasCalculator, evmConfiguration, evmSpecVersion);
     }
 
     @Provides
