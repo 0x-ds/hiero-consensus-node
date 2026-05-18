@@ -106,6 +106,10 @@ public abstract class AbstractCustomCreateOperation extends AbstractOperation {
         if (frame.getRemainingGas() < cost) {
             return new Operation.OperationResult(cost, INSUFFICIENT_GAS);
         }
+        final long inputSize = clampedToLong(frame.getStackItem(2));
+        if (inputSize > evm.getMaxInitcodeSize()) {
+            return new OperationResult(cost, ExceptionalHaltReason.CODE_TOO_LARGE);
+        }
         final var value = Wei.wrap(frame.getStackItem(0));
 
         final var senderAddress = getSenderAddress(frame);

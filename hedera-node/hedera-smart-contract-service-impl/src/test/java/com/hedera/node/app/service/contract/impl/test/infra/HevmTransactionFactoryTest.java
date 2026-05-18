@@ -98,6 +98,7 @@ import edu.umd.cs.findbugs.annotations.NonNull;
 import java.util.function.Consumer;
 import org.bouncycastle.util.encoders.Hex;
 import org.hiero.base.utility.CommonUtils;
+import org.hyperledger.besu.evm.EvmSpecVersion;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -137,6 +138,9 @@ class HevmTransactionFactoryTest {
     @Mock
     private HederaEvmContext context;
 
+    @Mock
+    private EvmSpecVersion evmSpecVersion;
+
     private static final long TOP_LEVEL_TINYBAR_GAS_PRICE = 100L;
 
     private static final ContractsConfig CONFIG_THROTTLE_BY_GAS = HederaTestConfigBuilder.create()
@@ -165,7 +169,8 @@ class HevmTransactionFactoryTest {
                 ethereumSignatures,
                 context,
                 entityIdFactory,
-                DEFAULT_HOOKS_CONFIG);
+                DEFAULT_HOOKS_CONFIG,
+                evmSpecVersion);
     }
 
     @Test
@@ -827,7 +832,8 @@ class HevmTransactionFactoryTest {
                 ethereumSignatures,
                 context,
                 entityIdFactory,
-                DEFAULT_HOOKS_CONFIG);
+                DEFAULT_HOOKS_CONFIG,
+                evmSpecVersion);
     }
 
     private void givenInsteadFailedHydrationSubject() {
@@ -848,7 +854,8 @@ class HevmTransactionFactoryTest {
                 ethereumSignatures,
                 context,
                 entityIdFactory,
-                DEFAULT_HOOKS_CONFIG);
+                DEFAULT_HOOKS_CONFIG,
+                evmSpecVersion);
     }
 
     private void givenInsteadHydratedEthTxWithWrongChainId(@NonNull final EthTxData ethTxData) {
@@ -869,7 +876,8 @@ class HevmTransactionFactoryTest {
                 ethereumSignatures,
                 context,
                 entityIdFactory,
-                DEFAULT_HOOKS_CONFIG);
+                DEFAULT_HOOKS_CONFIG,
+                evmSpecVersion);
     }
 
     private void givenInsteadHydratedEthTxWithRightChainId(@NonNull final EthTxData ethTxData) {
@@ -890,6 +898,7 @@ class HevmTransactionFactoryTest {
                 ethereumSignatures,
                 context,
                 entityIdFactory,
-                DEFAULT_HOOKS_CONFIG);
+                DEFAULT_HOOKS_CONFIG,
+                evmSpecVersion);
     }
 }
